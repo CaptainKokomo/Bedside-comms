@@ -1,0 +1,13 @@
+{
+  "name": "Bedside Comms",
+  "short_name": "Bedside",
+  "description": "Free AAC communication board for patients who can't speak. Eyes, mouth, blink, switch or touch.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0d10",
+  "theme_color": "#0b0d10",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
