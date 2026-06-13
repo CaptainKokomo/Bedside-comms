@@ -350,12 +350,12 @@ function loop(){
   const lookL =(score(bs,"eyeLookOutLeft")+score(bs,"eyeLookInRight"))/2; /* patient's left */
   eyeDot.className = closed ? "closed" : "open";
 
-  /* --- emergency multi-blink: only DELIBERATE quick blinks count ---
-     A selection dwell-hold keeps the eyes closed for a long time and must NOT count.
-     We measure each closure's duration on re-open; only short blinks (< 400ms) tally.
-     Requires cfg.emerg quick blinks inside a tight 1400ms window, then a 6s cooldown
-     so it can't re-fire on every involuntary flicker. */
-  if(cfg.emerg>0){
+  /* --- emergency multi-blink — MOUTH MODE ONLY ---
+     In blink and gaze modes the patient SELECTS by closing their eyes, so counting
+     eye-closures as an alarm is the same gesture meaning two things — it will always
+     false-fire. It only runs in mouth mode, where the eyes are free (selection is jaw-open).
+     Quick blinks only (a hold is excluded), tight 1400ms window, 6s cooldown. */
+  if(cfg.emerg>0 && mode==="mouth"){
     if(closed && !wasClosed){ closeStart=now; }            /* eyes just closed */
     if(!closed && wasClosed){                              /* eyes just re-opened */
       const dur = now - (closeStart||now);
