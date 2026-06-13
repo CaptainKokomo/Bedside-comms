@@ -6,6 +6,8 @@ Built by an ICU nurse who was tired of watching intubated patients try to mouth 
 
 ## Try it
 
+https://raw.githack.com/CaptainKokomo/Bedside-comms/main/index.html
+
 Open the page on a phone or tablet (it must be served over **HTTPS** for the camera modes — see Hosting below). Prop the device where the patient can see it — a cheap gooseneck phone clamp on the bed rail works well. Pick an input mode on the setup screen. That's it.
 
 ## How it works
