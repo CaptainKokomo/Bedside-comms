@@ -112,8 +112,8 @@ select { background:#1b2027; color:#fff; border:none; border-radius:9px; padding
 <div class="row" id="sensrow"><label>Eye sensitivity</label><input type="range" id="sens" min="30" max="70" value="45" step="5"><span class="val" id="sensval">45%</span></div>
 <div class="row"><label>Emergency blink</label>
 <select id="emerg">
-<option value="0">Off</option>
-<option value="3" selected>Triple blink → alarm</option>
+<option value="0" selected>Off</option>
+<option value="3">Triple blink → alarm</option>
 <option value="2">Double blink → alarm</option>
 </select>
 </div>
@@ -153,9 +153,9 @@ const COLORS = ["#185fa5","#0f6e56","#854f0b","#6d3a8a","#993556","#0c447c"];
 const $ = id => document.getElementById(id);
 const grid=$('grid'), sentenceEl=$('sentence'), backBtn=$('back'), statusEl=$('status'),
       eyeDot=$('eyestate'), cam=$('cam'), faceLost=$('facelost');
-let stack=[TREE], built=[], lastSpoken="", mode="touch";
+let stack=[TREE], built=[], lastSpoken="", mode="touch", items=[];
 let scanIdx=0, scanTimer=null;
-let cfg = { scanMs:2400, dwellMs:1100, sens:0.45, emerg:3, mode:"touch" };
+let cfg = { scanMs:2400, dwellMs:1100, sens:0.45, emerg:0, mode:"touch" };
 try { Object.assign(cfg, JSON.parse(localStorage.getItem('bedside_v02')||"{}")); } catch(e){}
 const saveCfg = () => { try{ localStorage.setItem('bedside_v02', JSON.stringify(cfg)); }catch(e){} };
 const current = () => stack[stack.length-1];
@@ -163,10 +163,23 @@ const current = () => stack[stack.length-1];
 /* ================= board ================= */
 function render(){
   const node=current(); grid.innerHTML=""; scanIdx=0;
-  node.children.forEach((child,i)=>{
+  /* combined list: vocabulary zones first, then patient-reachable action tiles.
+     everything here is scanned + dwell-selectable — nothing is touch-only. */
+  items = node.children.map(c=>({type:'vocab', node:c}));
+  if(stack.length>1) items.push({type:'action', act:'back',   label:'‹ Back'});
+  items.push({type:'action', act:'repeat', label:'↻ Say again'});
+  items.push({type:'action', act:'clear',  label:'✕ Start over'});
+  items.push({type:'action', act:'nurse',  label:'🔔 CALL NURSE', urgent:true});
+  items.forEach((it,i)=>{
     const b=document.createElement('button');
-    b.className='zone'; b.style.background=COLORS[i%COLORS.length];
-    b.innerHTML=`<span class="fill"></span>${child.label}${child.hint?`<small>${child.hint}</small>`:""}`;
+    b.className='zone';
+    if(it.type==='vocab'){
+      b.style.background=COLORS[i%COLORS.length];
+      b.innerHTML=`<span class="fill"></span>${it.node.label}${it.node.hint?`<small>${it.node.hint}</small>`:""}`;
+    } else {
+      b.style.background = it.urgent ? '#a32d2d' : '#39404a';
+      b.innerHTML=`<span class="fill"></span>${it.label}`;
+    }
     b.onclick=()=>{ if(mode==="touch") choose(i); };
     grid.appendChild(b);
   });
@@ -180,10 +193,18 @@ function highlight(i){
 }
 function choose(i){
   stopScan();
-  const child=current().children[i];
-  if(!child) { render(); return; }
+  const it=items[i];
+  if(!it){ render(); return; }
+  if(it.type==='action'){ doAction(it.act); return; }
+  const child=it.node;
   if(child.children){ stack.push(child); render(); }
   else { say(child.say||child.label); reset(); }
+}
+function doAction(act){
+  if(act==='back'){ goBack(); }
+  else if(act==='repeat'){ if(lastSpoken) speak(lastSpoken); render(); }
+  else if(act==='clear'){ built=[]; paint(); reset(); }
+  else if(act==='nurse'){ say("Please call the nurse."); reset(); }
 }
 function goBack(){ stopScan(); if(stack.length>1){ stack.pop(); render(); } else render(); }
 function say(t){ built.push(t); lastSpoken=t; paint(); speak(t); }
